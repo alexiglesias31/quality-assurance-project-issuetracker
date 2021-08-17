@@ -187,6 +187,39 @@ suite('Functional Tests', async function () {
             })
 
     })
+    test('Update issue with no fields to update', function(done){
+        chai
+            .request(server)
+            .put('/api/issues/apitest')
+            .send({
+                _id: '111111111111111111111111',
+            })
+            .end((err, res) => {
+                const data = JSON.parse(res.text)
+                assert.equal(res.status, 200)
+                assert.equal(data._id, '111111111111111111111111')
+                assert.equal(data.error, 'no update field(s) sent')
+                done()
+            })
+
+    })
+    test('Update issue with invalid _id', function(done){
+        chai
+            .request(server)
+            .put('/api/issues/apitest')
+            .send({
+                _id: '111111111111111111111111',
+                issue_text: 'Updated text',
+            })
+            .end((err, res) => {
+                const data = JSON.parse(res.text)
+                assert.equal(res.status, 200)
+                assert.equal(data._id, '111111111111111111111111')
+                assert.equal(data.error, 'could not update')
+                done()
+            })
+
+    })
 
     // DELETE tests
     test('Delete an issue', function(done) {

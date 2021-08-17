@@ -23,9 +23,15 @@ module.exports = function (app) {
       let project = req.params.project;
       let query = getFormattedData(req.query);
 
+      query.project = project
+
+      console.log(query)
+
       let issues = await Issue.find(query);
 
-      res.send(issues.map(issue => {
+      console.log(issues)
+
+      let response = issues.map(issue => {
         return {
           "_id": issue._id,
           "issue_title": issue.title,
@@ -37,7 +43,9 @@ module.exports = function (app) {
           "open": issue.open,
           "status_text": issue.statusText
         }
-      }))
+      })
+
+      res.send(response)
     })
 
     .post(async function (req, res) {
@@ -48,39 +56,6 @@ module.exports = function (app) {
       if (postData.title === undefined || postData.text === undefined || postData.createdBy === undefined) {
         res.json({
           error: 'required field(s) missing'
-        })
-        return
-      }
-
-      // Check for existing issue
-      const issueDB = await Issue.findOneAndUpdate(
-        {
-          project: project,
-          title: postData.title
-        },
-        {
-          text: postData.text,
-          createdBy: postData.createdBy,
-          assignedTo: postData.assignedTo !== undefined ? postData.assignedTo : '',
-          statusText: postData.statusText !== undefined ? postData.statusText : '',
-          open: true,
-          updatedOn: new Date(),
-        },
-        {
-          new: true,
-        })
-
-      if (issueDB) {
-        res.json({
-          "_id": issueDB._id,
-          "issue_title": issueDB.title,
-          "issue_text": issueDB.text,
-          "created_on": issueDB.createdOn,
-          "updated_on": issueDB.updatedOn,
-          "created_by": issueDB.createdBy,
-          "assigned_to": issueDB.assignedTo,
-          "open": issueDB.open,
-          "status_text": issueDB.statusText
         })
         return
       }
@@ -122,13 +97,15 @@ module.exports = function (app) {
         return
       }
 
-      if (postData.length === 1) {
+      if (Object.keys(postData).length === 1) {
         res.json({
           error: 'no update field(s) sent',
           _id: postData._id
         })
         return
       }
+
+      postData.updatedOn = new Date()
 
       const issue = await Issue.findByIdAndUpdate(
         postData._id,
@@ -145,8 +122,8 @@ module.exports = function (app) {
       }
 
       res.json({
-        "result": 'successfully updated',
-        "_id": issue._id,
+        result: 'successfully updated',
+        _id: issue._id,
       })
     })
 
@@ -165,15 +142,15 @@ module.exports = function (app) {
 
       if (!issue) {
         res.json({
+          error: 'could not delete',
           _id: postData._id,
-          error: 'could not delete'
         })
         return
       }
 
       res.json({
-        _id: postData._id,
-        result: 'successfully deleted'
+        result: 'successfully deleted',
+        _id: postData._id
       })
     })
 
